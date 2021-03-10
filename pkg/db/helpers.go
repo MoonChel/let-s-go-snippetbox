@@ -14,3 +14,9 @@ func OpenDB(dsn string) (*gorm.DB, error) {
 
 	return db, nil
 }
+
+func MigrateDB(dbPool *gorm.DB) error {
+	err := dbPool.AutoMigrate(&SnippetModel{})
+
+	return err
+}

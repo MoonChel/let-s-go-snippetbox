@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+
+	db "vladimir.chernenko/snippetbox/pkg/db"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -22,14 +24,12 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	ts, err := template.ParseFiles(templates...)
 
 	if err != nil {
-		app.errorLog.Println(err.Error())
 		app.serverError(w, err)
 		return
 	}
 
 	err = ts.Execute(w, nil)
 	if err != nil {
-		app.errorLog.Println(err.Error())
 		app.serverError(w, err)
 	}
 }
@@ -49,5 +49,17 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
-	w.Write([]byte("Create a new snippet..."))
+
+	snippet := &db.SnippetModel{
+		Title:   "My First Snippet",
+		Content: "My first snippet content",
+	}
+
+	result := app.dbPool.Create(snippet)
+
+	if result.Error != nil {
+		app.serverError(w, result.Error)
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", snippet.ID), http.StatusSeeOther)
 }

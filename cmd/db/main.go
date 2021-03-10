@@ -17,6 +17,7 @@ func main() {
 	flag.StringVar(&cfg.DatabaseDSN, "db-dsn", "postgresql://guest:guest@127.0.0.1:6000/snippetbox", "DSN for database")
 	flag.Parse()
 
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// db init
@@ -26,7 +27,9 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	if err = dbPool.AutoMigrate(&db.SnippetModel{}); err != nil {
+	if err = db.MigrateDB(dbPool); err != nil {
 		errorLog.Fatal(err)
 	}
+
+	infoLog.Println("Migrated successfully")
 }
