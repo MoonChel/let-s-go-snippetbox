@@ -1,0 +1,12 @@
+version: "2"
+
+services:
+  db:
+    image: "postgres:12-alpine"
+    environment:
+      - POSTGRES_PASSWORD=guest
+      - POSTGRES_USER=guest
+      - POSTGRES_DB=snippetbox
+    ports:
+      # local:container
+      - "6000:5432"
