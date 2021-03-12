@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
+	"time"
 
 	db "vladimir.chernenko/snippetbox/pkg/db"
 )
@@ -15,32 +15,54 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templates := []string{
-		"./ui/html/home.page.tmpl",
-		"./ui/html/base.layout.tmpl",
-		"./ui/html/footer.partial.tmpl",
-	}
+	// templates := []string{
+	// 	"./ui/html/home.page.tmpl",
+	// 	"./ui/html/base.layout.tmpl",
+	// 	"./ui/html/footer.partial.tmpl",
+	// }
 
-	ts, err := template.ParseFiles(templates...)
+	// _, err := template.ParseFiles(templates...)
 
-	if err != nil {
-		app.serverError(w, err)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// 	return
+	// }
+
+	var snippets []db.SnippetModel
+
+	result := app.dbPool.Where("expires > ?", time.Now().UTC()).Order("created_at").Limit(10).Take(&snippets)
+	if result.Error != nil {
+		app.serverError(w, result.Error)
 		return
 	}
 
-	err = ts.Execute(w, nil)
-	if err != nil {
-		app.serverError(w, err)
-	}
+	fmt.Fprintf(w, "%v", snippets)
+
+	// err = ts.Execute(w, snippets)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// }
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	id, err := strconv.ParseUint(r.URL.Query().Get("id"), 10, 64)
+
 	if err != nil || id < 1 {
 		app.notFound(w)
 		return
 	}
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+
+	snippet := &db.SnippetModel{}
+	result := app.dbPool.Where(
+		"id = ? AND expires > ?", id, time.Now().UTC(),
+	).First(snippet)
+
+	if result.Error != nil {
+		app.serverError(w, result.Error)
+		return
+	}
+
+	fmt.Fprintf(w, "%v", snippet)
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +75,7 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	snippet := &db.SnippetModel{
 		Title:   "My First Snippet",
 		Content: "My first snippet content",
+		Expires: time.Now().AddDate(0, 0, 7).UTC(),
 	}
 
 	result := app.dbPool.Create(snippet)

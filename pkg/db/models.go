@@ -8,6 +8,7 @@ type SnippetModel struct {
 	Content   string `gorm:"not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Expires   time.Time `gorm:"not null"`
 }
 
 func (SnippetModel) TableName() string {
