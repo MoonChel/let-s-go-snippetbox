@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 type Config struct {
 	Addr        string
 	StaticDir   string
+	TemplateDir string
 	DatabaseDSN string
 }
 
@@ -20,16 +22,19 @@ type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
 	dbPool   *gorm.DB
+	config   *Config
 }
 
 func main() {
 	// Parsing the runtime configuration settings for the application;
 	// Establishing the dependencies for the handlers; and
 	// Running the HTTP server.
+	fmt.Print(os.Args)
 
 	cfg := new(Config)
 	flag.StringVar(&cfg.Addr, "addr", ":4000", "HTTP network address")
 	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static folder")
+	flag.StringVar(&cfg.TemplateDir, "template-dir", "./ui/html", "Path to template folder")
 	flag.StringVar(&cfg.DatabaseDSN, "db-dsn", "postgresql://guest:guest@127.0.0.1:6000/snippetbox", "DSN for database")
 	flag.Parse()
 
@@ -46,6 +51,7 @@ func main() {
 		errorLog: errorLog,
 		infoLog:  infoLog,
 		dbPool:   dbPool,
+		config:   cfg,
 	}
 
 	srv := &http.Server{
