@@ -11,8 +11,12 @@
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/web",
             "args": [
-                "-addr=:9998"
-            ]
+                "-addr",
+                ":9998",
+                "-template-dir",
+                "../../ui/html"
+            ],
+            "showLog": false
         }
     ]
 }
