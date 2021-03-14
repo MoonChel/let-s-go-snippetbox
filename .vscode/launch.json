@@ -16,7 +16,7 @@
                 "-template-dir",
                 "../../ui/html"
             ],
-            "showLog": false
+            // "showLog": false
         }
     ]
 }

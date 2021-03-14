@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
 	"time"
 
 	db "vladimir.chernenko/snippetbox/pkg/db"
@@ -16,19 +15,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templates := []string{
-		app.getTemplate("home.page.tmpl"),
-		app.getTemplate("base.layout.tmpl"),
-		app.getTemplate("footer.partial.tmpl"),
-	}
-
-	ts, err := template.ParseFiles(templates...)
-
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
 	var snippets []db.SnippetModel
 
 	result := app.dbPool.Where("expires > ?", time.Now().UTC()).Order("created_at").Limit(10).Take(&snippets)
@@ -37,10 +23,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, snippets)
-	if err != nil {
-		app.serverError(w, err)
-	}
+	app.render(w, r, "home.page.tmpl", &templateData{Snippets: &snippets})
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
@@ -64,23 +47,7 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templates := []string{
-		app.getTemplate("show.page.tmpl"),
-		app.getTemplate("base.layout.tmpl"),
-		app.getTemplate("footer.partial.tmpl"),
-	}
-
-	ts, err := template.ParseFiles(templates...)
-
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	err = ts.Execute(w, snippet)
-	if err != nil {
-		app.serverError(w, err)
-	}
+	app.render(w, r, "show.page.tmpl", &templateData{Snippet: snippet})
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
