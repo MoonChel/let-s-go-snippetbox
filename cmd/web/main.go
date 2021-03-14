@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"text/template"
 
 	"gorm.io/gorm"
 	db "vladimir.chernenko/snippetbox/pkg/db"
@@ -19,10 +20,11 @@ type Config struct {
 }
 
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	dbPool   *gorm.DB
-	config   *Config
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	dbPool        *gorm.DB
+	config        *Config
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -47,11 +49,17 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	templateCache, err := cacheTemplates(cfg.TemplateDir)
+
+	if err != nil {
+		errorLog.Fatal(err)
+	}
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		dbPool:   dbPool,
-		config:   cfg,
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		dbPool:        dbPool,
+		config:        cfg,
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{
