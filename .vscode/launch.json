@@ -14,7 +14,9 @@
                 "-addr",
                 ":9998",
                 "-template-dir",
-                "../../ui/html"
+                "../../ui/html",
+                "-static-dir",
+                "../../ui/static"
             ],
             // "showLog": false
         }
