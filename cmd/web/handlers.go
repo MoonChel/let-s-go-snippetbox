@@ -12,7 +12,7 @@ import (
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	var snippets []db.SnippetModel
 
-	result := app.dbPool.Where("expires > ?", time.Now().UTC()).Order("created_at").Limit(10).Take(&snippets)
+	result := app.dbPool.Where("expires > ?", time.Now().UTC()).Order("created_at").Limit(10).Find(&snippets)
 	if result.Error != nil {
 		app.serverError(w, result.Error)
 		return
@@ -46,21 +46,33 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Create a new snippet..."))
+	app.render(w, r, "create.page.tmpl", nil)
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	snippet := &db.SnippetModel{
-		Title:   "My First Snippet",
-		Content: "My first snippet content",
-		Expires: time.Now().AddDate(0, 0, 7).UTC(),
+		Title:   r.PostForm.Get("title"),
+		Content: r.PostForm.Get("content"),
+		Expires: time.Now().AddDate(0, 0, expires).UTC(),
 	}
 
 	result := app.dbPool.Create(snippet)
 
 	if result.Error != nil {
 		app.serverError(w, result.Error)
+		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", snippet.ID), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", snippet.ID), http.StatusSeeOther)
 }
